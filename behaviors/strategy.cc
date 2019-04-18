@@ -1,5 +1,6 @@
 #include "naobehavior.h"
 #include "../rvdraw/rvdraw.h"
+#include "common.h"
 
 extern int agentBodyType;
 
@@ -8,8 +9,54 @@ extern int agentBodyType;
  * Filling params x y angle
  */
 void NaoBehavior::beam( double& beamX, double& beamY, double& beamAngle ) {
-    beamX = -HALF_FIELD_X + worldModel->getUNum();
-    beamY = 0;
+    //beamX = -HALF_FIELD_X + worldModel->getUNum();
+    //beamY = 0;
+    switch(worldModel->getUNum()) {
+        case ROLE_GOALIE:
+            beamX = -HALF_FIELD_X +0.25;
+            beamY = 0;
+            break;
+        case ROLE_ON_BALL:
+            beamX = -1;
+            beamY = 0;
+            break;
+        case ROLE_FRONT_RIGHT:
+            beamX = worldModel->getTeammate(ROLE_ON_BALL).getX() - 0.5;
+            beamY = worldModel->getTeammate(ROLE_ON_BALL).getY() - 2;
+            break;
+	case ROLE_FRONT_LEFT:
+            beamX = worldModel->getTeammate(ROLE_ON_BALL).getX() - 0.5;
+            beamY = worldModel->getTeammate(ROLE_ON_BALL).getY() + 2;
+            break;
+	case ROLE_FORWARD_CENTER:
+            beamX = HALF_FIELD_X/2;
+            beamY = 0;
+            break;
+        case ROLE_SUPPORTER:
+            beamX = worldModel->getTeammate(ROLE_ON_BALL).getX() - 2;
+            beamY = worldModel->getTeammate(ROLE_ON_BALL).getY();
+            break;
+        case ROLE_WING_RIGHT:
+            beamX = worldModel->getTeammate(ROLE_ON_BALL).getX() - 3;
+            beamY = worldModel->getTeammate(ROLE_ON_BALL).getY() - 2;
+            break;
+        case ROLE_WING_LEFT:
+            beamX = worldModel->getTeammate(ROLE_ON_BALL).getX() - 3;
+            beamY = worldModel->getTeammate(ROLE_ON_BALL).getY() + 2;
+            break;
+        case ROLE_MIDDLE:
+            beamX = -HALF_FIELD_X/2;
+            beamY = 0;
+            break;
+        case ROLE_BACK_RIGHT:
+            beamX = -HALF_FIELD_X + 2;
+            beamY = 0;
+            break;
+        case ROLE_BACK_LEFT:
+            beamX = -HALF_FIELD_X + 3;
+            beamY = 0;
+            break;
+    }
     beamAngle = 0;
 }
 
@@ -65,11 +112,11 @@ SkillType NaoBehavior::selectSkill() {
     //return kickBall(KICK_IK, VecPosition(HALF_FIELD_X, 0, 0)); // IK kick
 
     // Just stand in place
-    //return SKILL_STAND;
+    return SKILL_STAND;
 
     // Demo behavior where players form a rotating circle and kick the ball
     // back and forth
-    return demoKickingCircle();
+    //return demoKickingCircle();
 }
 
 
