@@ -227,6 +227,7 @@ protected:
     void getSkillsForKickType(int kickType, SkillType skillsForType[]);
 
     SkillType demoKickingCircle();
+    VecPosition getPosInFormation();
 
 public:
 

@@ -4,58 +4,88 @@
 
 extern int agentBodyType;
 
+VecPosition NaoBehavior::getPosInFormation()
+{
+    VecPosition target;
+       switch(worldModel->getUNum()) {
+        case ROLE_GOALIE:
+            target.setX(-HALF_FIELD_X +0.25);
+            target.setY(0);
+            break;
+        case ROLE_ON_BALL:
+            target.setX(worldModel->getBall().getX());
+            target.setY(worldModel->getBall().getY());
+            break;
+        case ROLE_FRONT_RIGHT:
+            target.setX(worldModel->getBall().getX() - 0.5);
+            target.setY(worldModel->getBall().getY() - 2);
+            break;
+	case ROLE_FRONT_LEFT: 
+            target.setX(worldModel->getBall().getX() - 0.5);
+            target.setY(worldModel->getBall().getY() + 2);
+            break;
+	case ROLE_FORWARD_CENTER:
+            target.setX(HALF_FIELD_X/2);
+            target.setY(0);
+            break;
+        case ROLE_SUPPORTER:
+            target.setX(worldModel->getBall().getX() - 2);
+            target.setY(worldModel->getBall().getY());
+            break;
+        case ROLE_WING_RIGHT:
+            target.setX(worldModel->getBall().getX() - 3);
+            target.setY(worldModel->getBall().getY() - 2);
+            break;
+        case ROLE_WING_LEFT:
+            target.setX(worldModel->getBall().getX() - 3);
+            target.setY(worldModel->getBall().getY() + 2);
+            break;
+        case ROLE_MIDDLE:
+            target.setX(-HALF_FIELD_X/2);
+            target.setY(0);
+            break;
+        case ROLE_BACK_RIGHT:
+            target.setX(-HALF_FIELD_X + 2);
+            target.setY(0);
+            break;
+        case ROLE_BACK_LEFT:
+            target.setX(-HALF_FIELD_X + 3);
+            target.setY(0);
+            break;
+    }
+    /* Verify position*/
+    if(target.getX() > HALF_FIELD_X)
+        target.setX(HALF_FIELD_X);
+    else if(target.getX() < -HALF_FIELD_X)
+        target.setX(-HALF_FIELD_X);
+    if(target.getY() > HALF_FIELD_Y)
+        target.setY(HALF_FIELD_Y);
+    else if(target.getY() < -HALF_FIELD_Y)
+        target.setY(-HALF_FIELD_Y);
+
+    // Adjust target to not be too close to teammates or the ball
+    if (worldModel->getUNum() != ROLE_ON_BALL)
+        target = collisionAvoidance(true /*teammate*/, false/*opponent*/, true/*ball*/, 1/*proximity thresh*/, .5/*collision thresh*/, target, true/*keepDistance*/);
+ 
+    return target;
+}
 /*
  * Real game beaming.
  * Filling params x y angle
  */
 void NaoBehavior::beam( double& beamX, double& beamY, double& beamAngle ) {
     //beamX = -HALF_FIELD_X + worldModel->getUNum();
-    //beamY = 0;
-    switch(worldModel->getUNum()) {
-        case ROLE_GOALIE:
-            beamX = -HALF_FIELD_X +0.25;
-            beamY = 0;
-            break;
-        case ROLE_ON_BALL:
-            beamX = -1;
-            beamY = 0;
-            break;
-        case ROLE_FRONT_RIGHT:
-            beamX = worldModel->getTeammate(ROLE_ON_BALL).getX() - 0.5;
-            beamY = worldModel->getTeammate(ROLE_ON_BALL).getY() - 2;
-            break;
-	case ROLE_FRONT_LEFT:
-            beamX = worldModel->getTeammate(ROLE_ON_BALL).getX() - 0.5;
-            beamY = worldModel->getTeammate(ROLE_ON_BALL).getY() + 2;
-            break;
-	case ROLE_FORWARD_CENTER:
-            beamX = HALF_FIELD_X/2;
-            beamY = 0;
-            break;
-        case ROLE_SUPPORTER:
-            beamX = worldModel->getTeammate(ROLE_ON_BALL).getX() - 2;
-            beamY = worldModel->getTeammate(ROLE_ON_BALL).getY();
-            break;
-        case ROLE_WING_RIGHT:
-            beamX = worldModel->getTeammate(ROLE_ON_BALL).getX() - 3;
-            beamY = worldModel->getTeammate(ROLE_ON_BALL).getY() - 2;
-            break;
-        case ROLE_WING_LEFT:
-            beamX = worldModel->getTeammate(ROLE_ON_BALL).getX() - 3;
-            beamY = worldModel->getTeammate(ROLE_ON_BALL).getY() + 2;
-            break;
-        case ROLE_MIDDLE:
-            beamX = -HALF_FIELD_X/2;
-            beamY = 0;
-            break;
-        case ROLE_BACK_RIGHT:
-            beamX = -HALF_FIELD_X + 2;
-            beamY = 0;
-            break;
-        case ROLE_BACK_LEFT:
-            beamX = -HALF_FIELD_X + 3;
-            beamY = 0;
-            break;
+    //beamY = 0;if case ROLE_ON_BALL:
+    if(worldModel->getUNum() == ROLE_ON_BALL) {
+        beamX = -1;
+        beamY = 0;
+    } else if(worldModel->getUNum() == ROLE_FORWARD_CENTER) {
+        beamX = -2;
+        beamY = 1;
+    } else {
+        VecPosition target = getPosInFormation();
+        beamX = target.getX();
+        beamY = target.getY();
     }
     beamAngle = 0;
 }
@@ -112,11 +142,20 @@ SkillType NaoBehavior::selectSkill() {
     //return kickBall(KICK_IK, VecPosition(HALF_FIELD_X, 0, 0)); // IK kick
 
     // Just stand in place
-    return SKILL_STAND;
-
+    //return SKILL_STAND;
+//return goto
     // Demo behavior where players form a rotating circle and kick the ball
     // back and forth
     //return demoKickingCircle();
+ 
+    VecPosition target = getPosInFormation();
+     if (me.getDistanceTo(target) < .25) {
+            // Close enough to desired position and orientation so just stand
+            return SKILL_STAND;
+        } else {
+            // Move toward target location
+            return goToTarget(target);
+        }
 }
 
 
