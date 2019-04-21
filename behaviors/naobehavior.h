@@ -228,6 +228,8 @@ protected:
 
     SkillType demoKickingCircle();
     VecPosition getPosInFormation();
+    SkillType defense();
+    SkillType goalieAction();
 
 public:
 

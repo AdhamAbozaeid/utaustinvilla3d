@@ -1,8 +1,10 @@
 #include "naobehavior.h"
 #include "../rvdraw/rvdraw.h"
 #include "common.h"
+#include "defense.cc"
 
 extern int agentBodyType;
+char markedOpponents[NUM_AGENTS];
 
 VecPosition NaoBehavior::getPosInFormation()
 {
@@ -148,14 +150,7 @@ SkillType NaoBehavior::selectSkill() {
     // back and forth
     //return demoKickingCircle();
  
-    VecPosition target = getPosInFormation();
-     if (me.getDistanceTo(target) < .25) {
-            // Close enough to desired position and orientation so just stand
-            return SKILL_STAND;
-        } else {
-            // Move toward target location
-            return goToTarget(target);
-        }
+    return defense();
 }
 
 
