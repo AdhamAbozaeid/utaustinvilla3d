@@ -11,6 +11,12 @@
 still try to block it*/
 #define GOAL_MARGIN 0.5
 
+// Given 2 points on a line, get the slope and intercept
+void getLineParam(VecPosition point1, VecPosition point2, double &slope, double &intercept) {
+    slope = (point1.getY() - point2.getY()) / (point1.getX() - point2.getX());
+    intercept = point1.getY() - (slope * point1.getX());
+}
+
 /* Checks if the ball is currently moving */
 bool isBallMoving(const WorldModel *worldModel, double &slope, double &intercept) {
     static VecPosition lastBall = worldModel->getBallGroundTruth();
@@ -25,8 +31,7 @@ bool isBallMoving(const WorldModel *worldModel, double &slope, double &intercept
     if (thisBall.getDistanceTo(lastBall) > 0.2) {
         // the ball moved!
         //cout << "last: " << lastBall << " now: " << thisBall << " Dist: " << thisBall.getDistanceTo(lastBall)<<endl;
-        slope = (lastBall.getY() - thisBall.getY()) / (lastBall.getX() - thisBall.getX());
-        intercept = thisBall.getY() - (slope * thisBall.getX());
+        getLineParam(thisBall, lastBall, slope, intercept);
         //cout<<slope<< " "<<intercept<<endl;
         lastBall = thisBall;
         lastTime = thisTime;

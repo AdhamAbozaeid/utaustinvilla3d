@@ -46,14 +46,31 @@ VecPosition NaoBehavior::getPosInFormation()
             target.setX(-HALF_FIELD_X/2);
             target.setY(0);
             break;
-        case ROLE_BACK_RIGHT:
+        case ROLE_BACK_RIGHT: {
+            VecPosition Ball = worldModel->getBall();
+            VecPosition goalCenter = VecPosition(-HALF_FIELD_X, 0, 0);
+            double slope, intercept,y;
+            
+            getLineParam(Ball, goalCenter, slope, intercept);
             target.setX(-HALF_FIELD_X + 2);
-            target.setY(0);
+            y = (slope*(-HALF_FIELD_X + 2)) + intercept;
+            /*Stand at an offset above the line, Back Left will stand at an offset below the line*/
+            y -= 0.1*(signbit(y)? -1:1);
+            target.setY(y);
             break;
-        case ROLE_BACK_LEFT:
+        }
+        case ROLE_BACK_LEFT: {
+            VecPosition Ball = worldModel->getBall();
+            VecPosition goalCenter = VecPosition(-HALF_FIELD_X, 0, 0);
+            double slope, intercept,y;
+            
+            getLineParam(Ball, goalCenter, slope, intercept);
             target.setX(-HALF_FIELD_X + 3);
-            target.setY(0);
+            y = (slope*(-HALF_FIELD_X + 3)) + intercept;
+            y += 0.1*(signbit(y)? -1:1);
+            target.setY(y);
             break;
+        }
     }
     /* Verify position*/
     if(target.getX() > HALF_FIELD_X)
