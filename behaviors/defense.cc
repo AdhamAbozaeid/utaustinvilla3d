@@ -67,18 +67,69 @@ SkillType NaoBehavior::goalieAction() {
     return SKILL_STAND;
 }
 
+SkillType NaoBehavior::backAction() {
+    VecPosition Ball = worldModel->getBall();
+    VecPosition goalCenter = VecPosition(-HALF_FIELD_X, 0, 0);
+    VecPosition target;
+    double slope, intercept,y, distBallToGoal, distAgentToGoal;
+    float angle;
+    
+    getLineParam(Ball, goalCenter, slope, intercept);
+    angle = atan(slope);
+    distBallToGoal = abs(Ball.getDistanceTo(goalCenter));
+    
+    
+    if(worldModel->getUNum() == ROLE_BACK_RIGHT) {
+            /*Stand on line few degrees above line from ball to center of goal
+             Back Left will stand at an offset below the line*/
+            angle -= 0.07*(signbit(angle)? -1:1);
+            
+            if(distBallToGoal > 2)
+                distAgentToGoal = 2;
+            else
+                distAgentToGoal = distBallToGoal - 0.01;
+            target.setX(-HALF_FIELD_X + (distAgentToGoal*cos(angle)));
+            y = distAgentToGoal*sin(angle);
+            //cout<<"BR angle: " << angle<<" x: "<<-HALF_FIELD_X + (2*sin(angle))<<" Y: "<<y<<endl;
+            target.setY(y);
+    } else {
+            angle += 0.07*(signbit(angle)? -1:1);
+
+            if(distBallToGoal > 3)
+                distAgentToGoal = 3;
+            else
+                distAgentToGoal = distBallToGoal - 0.01;
+            target.setX(-HALF_FIELD_X + (distAgentToGoal*cos(angle)));
+            y = distAgentToGoal*sin(angle);
+
+            //cout<<"BL angle: " << angle<<" x: "<<-HALF_FIELD_X + (3*sin(angle))<<" Y: "<<y<<endl;
+            target.setY(y);
+    }
+
+    target = collisionAvoidance(true /*teammate*/, false/*opponent*/, true/*ball*/, 1/*proximity thresh*/, .5/*collision thresh*/, target, true/*keepDistance*/);
+ 
+    // Use goto relative to face the ball
+    return goToTargetRelative(worldModel->g2l(target), angle);
+}
 SkillType NaoBehavior::defense() {
 
-    if (worldModel->getUNum() == ROLE_GOALIE) {
-        return goalieAction();
-    } else {
-        VecPosition target = getPosInFormation();
-        if (me.getDistanceTo(target) < .25) {
-            // Close enough to desired position and orientation so just stand
-            return SKILL_STAND;
-        } else {
-            // Move toward target location
-            return goToTarget(target);
-        }
+    switch(worldModel->getUNum()) {
+        case ROLE_GOALIE:
+            return goalieAction();
+            break;
+        case ROLE_BACK_LEFT:
+        case ROLE_BACK_RIGHT:
+            return backAction();
+            break;
+        default:
+            VecPosition target = getPosInFormation();
+            if (me.getDistanceTo(target) < .25) {
+                // Close enough to desired position and orientation so just stand
+                return SKILL_STAND;
+            } else {
+                // Move toward target location
+                return goToTarget(target);
+            }
+            break;
     }
 }

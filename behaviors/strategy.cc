@@ -49,25 +49,45 @@ VecPosition NaoBehavior::getPosInFormation()
         case ROLE_BACK_RIGHT: {
             VecPosition Ball = worldModel->getBall();
             VecPosition goalCenter = VecPosition(-HALF_FIELD_X, 0, 0);
-            double slope, intercept,y;
+            double slope, intercept,y,distBallToGoal, distAgentToGoal;
+            float angle;
             
+            distBallToGoal = abs(Ball.getDistanceTo(goalCenter));
             getLineParam(Ball, goalCenter, slope, intercept);
-            target.setX(-HALF_FIELD_X + 2);
-            y = (slope*(-HALF_FIELD_X + 2)) + intercept;
-            /*Stand at an offset above the line, Back Left will stand at an offset below the line*/
-            y -= 0.1*(signbit(y)? -1:1);
+            angle = atan(slope);
+            /*Stand on line few degrees above line from ball to center of goal
+             Back Left will stand at an offset below the line*/
+            angle -= 0.07*(signbit(angle)? -1:1);
+            
+            if(distBallToGoal > 2)
+                distAgentToGoal = 2;
+            else
+                distAgentToGoal = distBallToGoal - 0.01;
+            target.setX(-HALF_FIELD_X + (distAgentToGoal*cos(angle)));
+            y = distAgentToGoal*sin(angle);
+            //cout<<"BR angle: " << angle<<" x: "<<-HALF_FIELD_X + (2*sin(angle))<<" Y: "<<y<<endl;
             target.setY(y);
             break;
         }
         case ROLE_BACK_LEFT: {
             VecPosition Ball = worldModel->getBall();
             VecPosition goalCenter = VecPosition(-HALF_FIELD_X, 0, 0);
-            double slope, intercept,y;
+            double slope, intercept,y, distBallToGoal, distAgentToGoal;
+            float angle;
             
+            distBallToGoal = abs(Ball.getDistanceTo(goalCenter));
             getLineParam(Ball, goalCenter, slope, intercept);
-            target.setX(-HALF_FIELD_X + 3);
-            y = (slope*(-HALF_FIELD_X + 3)) + intercept;
-            y += 0.1*(signbit(y)? -1:1);
+            angle = atan(slope);
+            angle += 0.07*(signbit(angle)? -1:1);
+
+            if(distBallToGoal > 3)
+                distAgentToGoal = 3;
+            else
+                distAgentToGoal = distBallToGoal - 0.01;
+            target.setX(-HALF_FIELD_X + (distAgentToGoal*cos(angle)));
+            y = distAgentToGoal*sin(angle);
+
+            //cout<<"BL angle: " << angle<<" x: "<<-HALF_FIELD_X + (3*sin(angle))<<" Y: "<<y<<endl;
             target.setY(y);
             break;
         }

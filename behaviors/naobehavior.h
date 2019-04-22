@@ -230,6 +230,7 @@ protected:
     VecPosition getPosInFormation();
     SkillType defense();
     SkillType goalieAction();
+    SkillType backAction();
 
 public:
 
