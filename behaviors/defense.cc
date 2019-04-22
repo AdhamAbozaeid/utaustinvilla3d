@@ -54,13 +54,16 @@ SkillType NaoBehavior::goalieAction() {
         // Is ball moving towards goal?
         yAtGoal = (slope * - HALF_FIELD_X) + intercept;
         if ((yAtGoal < (HALF_GOAL_Y + GOAL_MARGIN)) && (yAtGoal > -(HALF_GOAL_Y + GOAL_MARGIN))) {
-            VecPosition target = worldModel->getMyPosition();
+            VecPosition target = VecPosition(-HALF_FIELD_X + 0.25, 0, 0);
             if (yAtGoal > HALF_GOAL_Y)
                 yAtGoal = HALF_GOAL_Y;
             else if (yAtGoal < -HALF_GOAL_Y)
                 yAtGoal = -HALF_GOAL_Y;
             //cout<<slope <<" " << intercept << " " <<yAtGoal<<endl;
             target.setY(yAtGoal);
+        #ifdef ENABLE_DRAWINGS
+            worldModel->getRVSender()->drawLine("BALL_GOAL", worldModel->getBall().getX(), worldModel->getBall().getY(),-HALF_FIELD_X, yAtGoal, RVSender::MAGENTA); 
+        #endif
             //cout<<"Goalie: "<<target<<endl;
             return goToTarget(target);
         }
@@ -88,18 +91,22 @@ SkillType NaoBehavior::backAction() {
         if (distBallToGoal > 2)
             distAgentToGoal = 2;
         else
-            distAgentToGoal = distBallToGoal - 0.01;
+            distAgentToGoal = distBallToGoal - 0.5;
         target.setX(-HALF_FIELD_X + (distAgentToGoal * cos(angle)));
         y = distAgentToGoal * sin(angle);
         //cout<<"BR angle: " << angle<<" x: "<<-HALF_FIELD_X + (2*sin(angle))<<" Y: "<<y<<endl;
         target.setY(y);
+
+    #ifdef ENABLE_DRAWINGS
+        worldModel->getRVSender()->drawLine("BALL_GOAL", Ball.getX(), Ball.getY(), goalCenter.getX(), goalCenter.getY(), RVSender::GREEN); 
+    #endif
     } else {
         angle += 0.07 * (signbit(angle) ? -1 : 1);
 
         if (distBallToGoal > 3)
             distAgentToGoal = 3;
         else
-            distAgentToGoal = distBallToGoal - 0.01;
+            distAgentToGoal = distBallToGoal - 0.1;
         target.setX(-HALF_FIELD_X + (distAgentToGoal * cos(angle)));
         y = distAgentToGoal * sin(angle);
 
