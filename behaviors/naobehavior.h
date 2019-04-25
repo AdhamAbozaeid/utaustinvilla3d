@@ -227,6 +227,9 @@ protected:
     void getSkillsForKickType(int kickType, SkillType skillsForType[]);
 
     SkillType demoKickingCircle();
+    SkillType offense();
+
+    void find_closest_player_to_ball();
     VecPosition getPosInFormation();
     SkillType defense();
     SkillType goalieAction();

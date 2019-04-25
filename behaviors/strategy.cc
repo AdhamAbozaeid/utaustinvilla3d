@@ -2,6 +2,7 @@
 #include "../rvdraw/rvdraw.h"
 #include "common.h"
 #include "defense.cc"
+#include "offense.cc"
 
 extern int agentBodyType;
 char markedOpponents[NUM_AGENTS];
@@ -187,7 +188,8 @@ SkillType NaoBehavior::selectSkill() {
     // back and forth
     //return demoKickingCircle();
  
-    return defense();
+    //return defense();
+    return offense();
 }
 
 
