@@ -10,6 +10,12 @@
 /* If the ball is predicted to reach our goal at this distance from the post, 
 still try to block it*/
 #define GOAL_MARGIN 0.5
+#define MARKING_GOAL_DIST_THRESH 15
+#define MARKING_MIN_BALL_THRESH 2
+#define MARKING_MAX_BALL_THRESH 30
+
+char markedOpponents[NUM_AGENTS];
+char markingAgents[NUM_AGENTS];
 
 // Given 2 points on a line, get the slope and intercept
 
@@ -81,6 +87,78 @@ SkillType NaoBehavior::goalieAction() {
     return SKILL_STAND;
 }
 
+bool NaoBehavior::selectMarkedOpp() {
+    VecPosition goalCenter = VecPosition(-HALF_FIELD_X, 0, 0);
+    VecPosition opp;
+    double shortestDistToBall = DBL_MAX, distToBall;
+    int closestOppToBall = -1, noMarkedAgents = 0;
+
+    memset(markedOpponents, 0, sizeof (markedOpponents));
+    /* Opponent is close enough to take a shot on goal
+        Opponent is not the closest opponent to the ball
+        Opponent is not too close to the ball
+        Opponent is not too far behind the ball*/
+    for (int i = 0; i < NUM_OPPONENT; i++) {
+        opp = worldModel->getOpponent(WO_OPPONENT1 + i);
+        distToBall = opp.getDistanceTo(worldModel->getBall());
+        if (distToBall < shortestDistToBall) {
+            shortestDistToBall = distToBall;
+            closestOppToBall = i;
+        }
+
+        if ((opp.getDistanceTo(goalCenter) < MARKING_GOAL_DIST_THRESH) &&
+                (distToBall > MARKING_MIN_BALL_THRESH) && (distToBall < MARKING_MAX_BALL_THRESH)) {
+            markedOpponents[i] = 1;
+            noMarkedAgents++;
+        }
+    }
+
+    /* No need to mark closest opponent to Ball. Will be automatically marked by OnBall Agent*/
+    if (markedOpponents[closestOppToBall]) {
+        markedOpponents[closestOppToBall] = 0;
+        noMarkedAgents--;
+    }
+    for (int i = 0; i < NUM_OPPONENT; i++) {
+        opp = worldModel->getOpponent(WO_OPPONENT1 + i);
+        if (markedOpponents[i]) {
+            //cout << worldModel->getUNum() << " opp " << i << " marked" << endl;
+            worldModel->getRVSender()->drawCircle(opp.getX(), opp.getY(), 0.25, RVSender::YELLOW);
+        }
+    }
+
+    //cout << worldModel->getUNum() << " no marked agents: " << noMarkedAgents << endl;
+    return noMarkedAgents > 0;
+}
+
+void NaoBehavior::selectMarkingAgents() {
+    int currentAgentDist, closestAgentDist, closestAgentId;
+    VecPosition opp, agent;
+    memset(markingAgents, -1, sizeof (markingAgents));
+    for (int i = 0; i < NUM_OPPONENT; i++) {
+        if (markedOpponents[i] == 1) {
+            closestAgentDist = INT_MAX;
+            closestAgentId = -1;
+            opp = worldModel->getOpponent(WO_OPPONENT1 + i);
+
+            for (int j = ROLE_ON_BALL+1; j < NUM_AGENTS; j++) {
+                /* If the agent is not marking another opponent*/
+                if (markingAgents[j] == -1) {
+                    agent = worldModel->getTeammate(WO_TEAMMATE1 + j);
+                    currentAgentDist = agent.getDistanceTo(opp);
+                    if (currentAgentDist < closestAgentDist) {
+                        closestAgentDist = currentAgentDist;
+                        closestAgentId = j;
+                    }
+                }
+            }
+            if (closestAgentId >= 0) {
+                markingAgents[closestAgentId] = i;
+                //cout << worldModel->getUNum() << " agent "<<closestAgentId<<" marking opp: "<<i<<endl;
+            }
+        }
+    }
+}
+
 SkillType NaoBehavior::backAction() {
     VecPosition Ball = worldModel->getBall();
     VecPosition goalCenter = VecPosition(-HALF_FIELD_X, 0, 0);
@@ -90,7 +168,7 @@ SkillType NaoBehavior::backAction() {
 
     getLineParam(Ball, goalCenter, slope, intercept);
     angle = atan(slope);
-    distBallToGoal = abs(Ball.getDistanceTo(goalCenter));
+    distBallToGoal = Ball.getDistanceTo(goalCenter);
 
 
     if (worldModel->getUNum() == ROLE_BACK_RIGHT) {
@@ -131,7 +209,27 @@ SkillType NaoBehavior::backAction() {
 }
 
 SkillType NaoBehavior::defense() {
+    int markingOppIdx;
 
+    if ((worldModel->getUNum() != ROLE_GOALIE) && (worldModel->getUNum() != ROLE_ON_BALL)) {
+        if (selectMarkedOpp()) {
+            selectMarkingAgents();
+
+            markingOppIdx = markingAgents[worldModel->getUNum() - WO_TEAMMATE1];
+            //cout << worldModel->getUNum() << " assigned " << markingOppIdx << endl;
+            if (markingOppIdx != -1) {
+#ifdef ENABLE_DRAWINGSo
+                VecPosition opp = worldModel->getOpponent(WO_OPPONENT1 + markingOppIdx);
+                worldModel->getRVSender()->drawLine(worldModel->getMyPosition().getX(), worldModel->getMyPosition().getY(),
+                        opp.getX(), opp.getY(), RVSender::YELLOW);
+#endif
+                //return goToTarget(worldModel->getOpponent(WO_OPPONENT1 + markingOppIdx));
+                //cout << worldModel->getUNum() << " agent " << worldModel->getUNum() - WO_TEAMMATE1 << " marking opp " << markingOppIdx << endl;
+                return SKILL_STAND;
+            }
+
+        }
+    }
     switch (worldModel->getUNum()) {
         case ROLE_GOALIE:
             return goalieAction();

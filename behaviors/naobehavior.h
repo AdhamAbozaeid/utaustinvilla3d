@@ -234,6 +234,8 @@ protected:
     SkillType defense();
     SkillType goalieAction();
     SkillType backAction();
+    bool selectMarkedOpp();
+    void selectMarkingAgents();
 
 public:
 

@@ -129,6 +129,7 @@ void NaoBehavior::beam(double& beamX, double& beamY, double& beamAngle) {
         beamY = target.getY();
     }
     beamAngle = 0;
+    memset(markingAgents, -1, sizeof(markingAgents));
 }
 
 SkillType NaoBehavior::selectSkill() {
@@ -146,6 +147,10 @@ SkillType NaoBehavior::selectSkill() {
     worldModel->getRVSender()->clear(); // erases drawings from previous cycle
     worldModel->getRVSender()->drawPoint("ball", ball.getX(), ball.getY(), 10.0f, RVSender::MAGENTA);
      */
+#ifdef ENABLE_DRAWINGS
+    worldModel->getRVSender()->clear();
+    worldModel->getRVSender()->clearStaticDrawings();
+#endif
 
     // ### Demo Behaviors ###
 
