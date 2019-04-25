@@ -14,17 +14,20 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#define ROLE_GOALIE         1
-#define ROLE_ON_BALL        2
-#define ROLE_FRONT_RIGHT    3
-#define ROLE_FRONT_LEFT     4
-#define ROLE_SUPPORTER      5
-#define ROLE_WING_RIGHT     6
-#define ROLE_WING_LEFT      7
-#define ROLE_MIDDLE         8
-#define ROLE_BACK_RIGHT     9
-#define ROLE_BACK_LEFT      10
-#define ROLE_FORWARD_CENTER 11
+#define ENABLE_DRAWINGS
+#define NUM_OPPONENT 11
+
+#define ROLE_GOALIE         WO_TEAMMATE1
+#define ROLE_ON_BALL        WO_TEAMMATE2
+#define ROLE_FRONT_RIGHT    WO_TEAMMATE3
+#define ROLE_FRONT_LEFT     WO_TEAMMATE4
+#define ROLE_SUPPORTER      WO_TEAMMATE5
+#define ROLE_WING_RIGHT     WO_TEAMMATE6
+#define ROLE_WING_LEFT      WO_TEAMMATE7
+#define ROLE_MIDDLE         WO_TEAMMATE8
+#define ROLE_BACK_RIGHT     WO_TEAMMATE9
+#define ROLE_BACK_LEFT      WO_TEAMMATE10
+#define ROLE_FORWARD_CENTER WO_TEAMMATE11
 
 
 #endif /* COMMON_H */

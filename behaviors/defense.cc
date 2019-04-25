@@ -22,6 +22,7 @@ void getLineParam(VecPosition point1, VecPosition point2, double &slope, double 
 bool isBallMoving(const WorldModel *worldModel, double &slope, double &intercept) {
     static VecPosition lastBall = worldModel->getBallGroundTruth();
     static double lastTime = worldModel->getTime();
+    static double lastSlope = 0, lastIntercept = 0;
 
     double thisTime = worldModel->getTime();
     VecPosition thisBall = worldModel->getBall();
@@ -29,22 +30,26 @@ bool isBallMoving(const WorldModel *worldModel, double &slope, double &intercept
     thisBall.setZ(0);
     lastBall.setZ(0);
 
-    if (thisBall.getDistanceTo(lastBall) > 0.2) {
+    if (thisBall.getDistanceTo(lastBall) > 0.1) {
         // the ball moved!
         //cout << "last: " << lastBall << " now: " << thisBall << " Dist: " << thisBall.getDistanceTo(lastBall)<<endl;
         getLineParam(thisBall, lastBall, slope, intercept);
         //cout<<slope<< " "<<intercept<<endl;
         lastBall = thisBall;
         lastTime = thisTime;
+        lastSlope = slope;
+        lastIntercept = intercept;
         return true;
     }
 
-    //    if (thisTime - lastTime < 0.5) {
-    //        // not sure yet if the ball has settled
-    //        return true;
-    //    } else {
-    //        return false;
-    //    }
+    if (thisTime - lastTime < 0.5) {
+        // not sure yet if the ball has settled
+        slope = lastSlope;
+        intercept = lastIntercept;
+        return true;
+    } else {
+        return false;
+    }
     return false;
 }
 
@@ -61,10 +66,15 @@ SkillType NaoBehavior::goalieAction() {
                 yAtGoal = -HALF_GOAL_Y;
             //cout<<slope <<" " << intercept << " " <<yAtGoal<<endl;
             target.setY(yAtGoal);
+
 #ifdef ENABLE_DRAWINGS
             worldModel->getRVSender()->drawLine("BALL_GOAL", worldModel->getBall().getX(), worldModel->getBall().getY(), -HALF_FIELD_X, yAtGoal, RVSender::MAGENTA);
 #endif
             //cout<<"Goalie: "<<target<<endl;
+            //double angle;
+            //double distance;
+            //getTargetDistanceAndAngle(target, distance, angle);
+            //return goToTargetRelative(worldModel->g2l(target), angle, 2);
             return goToTarget(target);
         }
     }
