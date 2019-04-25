@@ -5,14 +5,12 @@
 #include "offense.cc"
 
 extern int agentBodyType;
-char markedOpponents[NUM_AGENTS];
 
-VecPosition NaoBehavior::getPosInFormation()
-{
+VecPosition NaoBehavior::getPosInFormation() {
     VecPosition target;
-       switch(worldModel->getUNum()) {
+    switch (worldModel->getUNum()) {
         case ROLE_GOALIE:
-            target.setX(-HALF_FIELD_X +0.25);
+            target.setX(-HALF_FIELD_X + 0.25);
             target.setY(0);
             break;
         case ROLE_ON_BALL:
@@ -23,12 +21,12 @@ VecPosition NaoBehavior::getPosInFormation()
             target.setX(worldModel->getBall().getX() - 0.5);
             target.setY(worldModel->getBall().getY() - 2);
             break;
-	case ROLE_FRONT_LEFT: 
+        case ROLE_FRONT_LEFT:
             target.setX(worldModel->getBall().getX() - 0.5);
             target.setY(worldModel->getBall().getY() + 2);
             break;
-	case ROLE_FORWARD_CENTER:
-            target.setX(HALF_FIELD_X/2);
+        case ROLE_FORWARD_CENTER:
+            target.setX(HALF_FIELD_X / 2);
             target.setY(0);
             break;
         case ROLE_SUPPORTER:
@@ -44,49 +42,51 @@ VecPosition NaoBehavior::getPosInFormation()
             target.setY(worldModel->getBall().getY() + 2);
             break;
         case ROLE_MIDDLE:
-            target.setX(-HALF_FIELD_X/2);
+            target.setX(-HALF_FIELD_X / 2);
             target.setY(0);
             break;
-        case ROLE_BACK_RIGHT: {
+        case ROLE_BACK_RIGHT:
+        {
             VecPosition Ball = worldModel->getBall();
             VecPosition goalCenter = VecPosition(-HALF_FIELD_X, 0, 0);
-            double slope, intercept,y,distBallToGoal, distAgentToGoal;
+            double slope, intercept, y, distBallToGoal, distAgentToGoal;
             float angle;
-            
-            distBallToGoal = abs(Ball.getDistanceTo(goalCenter));
+
+            distBallToGoal = Ball.getDistanceTo(goalCenter);
             getLineParam(Ball, goalCenter, slope, intercept);
             angle = atan(slope);
             /*Stand on line few degrees above line from ball to center of goal
              Back Left will stand at an offset below the line*/
-            angle -= 0.07*(signbit(angle)? -1:1);
-            
-            if(distBallToGoal > 2)
+            angle -= 0.07 * (signbit(angle) ? -1 : 1);
+
+            if (distBallToGoal > 2)
                 distAgentToGoal = 2;
             else
                 distAgentToGoal = distBallToGoal - 0.01;
-            target.setX(-HALF_FIELD_X + (distAgentToGoal*cos(angle)));
-            y = distAgentToGoal*sin(angle);
+            target.setX(-HALF_FIELD_X + (distAgentToGoal * cos(angle)));
+            y = distAgentToGoal * sin(angle);
             //cout<<"BR angle: " << angle<<" x: "<<-HALF_FIELD_X + (2*sin(angle))<<" Y: "<<y<<endl;
             target.setY(y);
             break;
         }
-        case ROLE_BACK_LEFT: {
+        case ROLE_BACK_LEFT:
+        {
             VecPosition Ball = worldModel->getBall();
             VecPosition goalCenter = VecPosition(-HALF_FIELD_X, 0, 0);
-            double slope, intercept,y, distBallToGoal, distAgentToGoal;
+            double slope, intercept, y, distBallToGoal, distAgentToGoal;
             float angle;
-            
-            distBallToGoal = abs(Ball.getDistanceTo(goalCenter));
+
+            distBallToGoal = Ball.getDistanceTo(goalCenter);
             getLineParam(Ball, goalCenter, slope, intercept);
             angle = atan(slope);
-            angle += 0.07*(signbit(angle)? -1:1);
+            angle += 0.07 * (signbit(angle) ? -1 : 1);
 
-            if(distBallToGoal > 3)
+            if (distBallToGoal > 3)
                 distAgentToGoal = 3;
             else
                 distAgentToGoal = distBallToGoal - 0.01;
-            target.setX(-HALF_FIELD_X + (distAgentToGoal*cos(angle)));
-            y = distAgentToGoal*sin(angle);
+            target.setX(-HALF_FIELD_X + (distAgentToGoal * cos(angle)));
+            y = distAgentToGoal * sin(angle);
 
             //cout<<"BL angle: " << angle<<" x: "<<-HALF_FIELD_X + (3*sin(angle))<<" Y: "<<y<<endl;
             target.setY(y);
@@ -94,32 +94,33 @@ VecPosition NaoBehavior::getPosInFormation()
         }
     }
     /* Verify position*/
-    if(target.getX() > HALF_FIELD_X)
+    if (target.getX() > HALF_FIELD_X)
         target.setX(HALF_FIELD_X);
-    else if(target.getX() < -HALF_FIELD_X)
+    else if (target.getX() < -HALF_FIELD_X)
         target.setX(-HALF_FIELD_X);
-    if(target.getY() > HALF_FIELD_Y)
+    if (target.getY() > HALF_FIELD_Y)
         target.setY(HALF_FIELD_Y);
-    else if(target.getY() < -HALF_FIELD_Y)
+    else if (target.getY() < -HALF_FIELD_Y)
         target.setY(-HALF_FIELD_Y);
 
     // Adjust target to not be too close to teammates or the ball
     if (worldModel->getUNum() != ROLE_ON_BALL)
         target = collisionAvoidance(true /*teammate*/, false/*opponent*/, true/*ball*/, 1/*proximity thresh*/, .5/*collision thresh*/, target, true/*keepDistance*/);
- 
+
     return target;
 }
+
 /*
  * Real game beaming.
  * Filling params x y angle
  */
-void NaoBehavior::beam( double& beamX, double& beamY, double& beamAngle ) {
+void NaoBehavior::beam(double& beamX, double& beamY, double& beamAngle) {
     //beamX = -HALF_FIELD_X + worldModel->getUNum();
     //beamY = 0;if case ROLE_ON_BALL:
-    if(worldModel->getUNum() == ROLE_ON_BALL) {
+    if (worldModel->getUNum() == ROLE_ON_BALL) {
         beamX = -1;
         beamY = 0;
-    } else if(worldModel->getUNum() == ROLE_FORWARD_CENTER) {
+    } else if (worldModel->getUNum() == ROLE_FORWARD_CENTER) {
         beamX = -2;
         beamY = 1;
     } else {
@@ -129,7 +130,6 @@ void NaoBehavior::beam( double& beamX, double& beamY, double& beamAngle ) {
     }
     beamAngle = 0;
 }
-
 
 SkillType NaoBehavior::selectSkill() {
     // My position and angle
@@ -145,7 +145,7 @@ SkillType NaoBehavior::selectSkill() {
     /*
     worldModel->getRVSender()->clear(); // erases drawings from previous cycle
     worldModel->getRVSender()->drawPoint("ball", ball.getX(), ball.getY(), 10.0f, RVSender::MAGENTA);
-    */
+     */
 
     // ### Demo Behaviors ###
 
@@ -183,15 +183,14 @@ SkillType NaoBehavior::selectSkill() {
 
     // Just stand in place
     //return SKILL_STAND;
-//return goto
+    //return goto
     // Demo behavior where players form a rotating circle and kick the ball
     // back and forth
     //return demoKickingCircle();
- 
+
     //return defense();
     return offense();
 }
-
 
 /*
  * Demo behavior where players form a rotating circle and kick the ball
@@ -199,21 +198,21 @@ SkillType NaoBehavior::selectSkill() {
  */
 SkillType NaoBehavior::demoKickingCircle() {
     // Parameters for circle
-    VecPosition center = VecPosition(-HALF_FIELD_X/2.0, 0, 0);
+    VecPosition center = VecPosition(-HALF_FIELD_X / 2.0, 0, 0);
     double circleRadius = 5.0;
     double rotateRate = 2.5;
 
     // Find closest player to ball
     int playerClosestToBall = -1;
     double closestDistanceToBall = 10000;
-    for(int i = WO_TEAMMATE1; i < WO_TEAMMATE1+NUM_AGENTS; ++i) {
+    for (int i = WO_TEAMMATE1; i < WO_TEAMMATE1 + NUM_AGENTS; ++i) {
         VecPosition temp;
         int playerNum = i - WO_TEAMMATE1 + 1;
         if (worldModel->getUNum() == playerNum) {
             // This is us
             temp = worldModel->getMyPosition();
         } else {
-            WorldObject* teammate = worldModel->getWorldObject( i );
+            WorldObject* teammate = worldModel->getWorldObject(i);
             if (teammate->validPosition) {
                 temp = teammate->pos;
             } else {
@@ -239,7 +238,7 @@ SkillType NaoBehavior::demoKickingCircle() {
 
         // Our desired target position on the circle
         // Compute target based on uniform number, rotate rate, and time
-        VecPosition target = center + VecPosition(circleRadius,0,0).rotateAboutZ(360.0/(NUM_AGENTS-1)*(worldModel->getUNum()-(worldModel->getUNum() > playerClosestToBall ? 1 : 0)) + worldModel->getTime()*rotateRate);
+        VecPosition target = center + VecPosition(circleRadius, 0, 0).rotateAboutZ(360.0 / (NUM_AGENTS - 1)*(worldModel->getUNum()-(worldModel->getUNum() > playerClosestToBall ? 1 : 0)) + worldModel->getTime() * rotateRate);
 
         // Adjust target to not be too close to teammates or the ball
         target = collisionAvoidance(true /*teammate*/, false/*opponent*/, true/*ball*/, 1/*proximity thresh*/, .5/*collision thresh*/, target, true/*keepDistance*/);

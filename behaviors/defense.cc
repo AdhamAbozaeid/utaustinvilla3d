@@ -61,9 +61,9 @@ SkillType NaoBehavior::goalieAction() {
                 yAtGoal = -HALF_GOAL_Y;
             //cout<<slope <<" " << intercept << " " <<yAtGoal<<endl;
             target.setY(yAtGoal);
-        #ifdef ENABLE_DRAWINGS
-            worldModel->getRVSender()->drawLine("BALL_GOAL", worldModel->getBall().getX(), worldModel->getBall().getY(),-HALF_FIELD_X, yAtGoal, RVSender::MAGENTA); 
-        #endif
+#ifdef ENABLE_DRAWINGS
+            worldModel->getRVSender()->drawLine("BALL_GOAL", worldModel->getBall().getX(), worldModel->getBall().getY(), -HALF_FIELD_X, yAtGoal, RVSender::MAGENTA);
+#endif
             //cout<<"Goalie: "<<target<<endl;
             return goToTarget(target);
         }
@@ -97,9 +97,9 @@ SkillType NaoBehavior::backAction() {
         //cout<<"BR angle: " << angle<<" x: "<<-HALF_FIELD_X + (2*sin(angle))<<" Y: "<<y<<endl;
         target.setY(y);
 
-    #ifdef ENABLE_DRAWINGS
-        worldModel->getRVSender()->drawLine("BALL_GOAL", Ball.getX(), Ball.getY(), goalCenter.getX(), goalCenter.getY(), RVSender::GREEN); 
-    #endif
+#ifdef ENABLE_DRAWINGS
+        worldModel->getRVSender()->drawLine("BALL_GOAL", Ball.getX(), Ball.getY(), goalCenter.getX(), goalCenter.getY(), RVSender::GREEN);
+#endif
     } else {
         angle += 0.07 * (signbit(angle) ? -1 : 1);
 
