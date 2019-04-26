@@ -121,42 +121,60 @@ bool NaoBehavior::selectMarkedOpp() {
     for (int i = 0; i < NUM_OPPONENT; i++) {
         opp = worldModel->getOpponent(WO_OPPONENT1 + i);
         if (markedOpponents[i]) {
-            //cout << worldModel->getUNum() << " opp " << i << " marked" << endl;
-            worldModel->getRVSender()->drawCircle(opp.getX(), opp.getY(), 0.25, RVSender::YELLOW);
+            //cout << WO worldModel->getUNum() << " opp " << i << " marked" << endl;
+            //worldModel->getRVSender()->drawCircle(opp.getX(), opp.getY(), 0.25, RVSender::YELLOW);
         }
     }
 
-    //cout << worldModel->getUNum() << " no marked agents: " << noMarkedAgents << endl;
+    //cout << worldModel->getUNum() - WO_TEAMMATE1 << " no marked agents: " << noMarkedAgents << endl;
     return noMarkedAgents > 0;
 }
 
 void NaoBehavior::selectMarkingAgents() {
-    int currentAgentDist, closestAgentDist, closestAgentId;
+    double currentAgentDist, closestAgentDist;
+    int closestAgentId;
     VecPosition opp, agent;
     memset(markingAgents, -1, sizeof (markingAgents));
+    for (int j = (ROLE_ON_BALL - WO_TEAMMATE1) + 1; j < NUM_AGENTS; j++) {
+        if (worldModel->getUNum() == (WO_TEAMMATE1 + j))
+            agent = worldModel->getMyPosition();
+        else
+            agent = worldModel->getTeammate(WO_TEAMMATE1 + j);
+
+        //cout << worldModel->getUNum() - WO_TEAMMATE1 << " agent " << j << agent << endl;
+    }
     for (int i = 0; i < NUM_OPPONENT; i++) {
         if (markedOpponents[i] == 1) {
             closestAgentDist = INT_MAX;
             closestAgentId = -1;
             opp = worldModel->getOpponent(WO_OPPONENT1 + i);
-
-            for (int j = ROLE_ON_BALL+1; j < NUM_AGENTS; j++) {
+            
+             //cout << worldModel->getUNum()-WO_TEAMMATE1 << " opp "<<i<<opp<<endl;
+            for (int j = (ROLE_ON_BALL-WO_TEAMMATE1)+1; j < NUM_AGENTS; j++) {
                 /* If the agent is not marking another opponent*/
                 if (markingAgents[j] == -1) {
-                    agent = worldModel->getTeammate(WO_TEAMMATE1 + j);
+                    if(worldModel->getUNum() == (WO_TEAMMATE1 + j))
+                            agent = worldModel->getMyPosition();
+                    else
+                        agent = worldModel->getTeammate(WO_TEAMMATE1 + j);
+                    
                     currentAgentDist = agent.getDistanceTo(opp);
+                    //cout << worldModel->getUNum()-WO_TEAMMATE1 << " agent "<< j << " distance "<<currentAgentDist<<" closest "<<closestAgentDist<< endl;
                     if (currentAgentDist < closestAgentDist) {
                         closestAgentDist = currentAgentDist;
                         closestAgentId = j;
                     }
+                }else{
+                    //cout << worldModel->getUNum()-WO_TEAMMATE1 << " agent "<< j << " already marking"<<endl;
                 }
             }
             if (closestAgentId >= 0) {
                 markingAgents[closestAgentId] = i;
-                //cout << worldModel->getUNum() << " agent "<<closestAgentId<<" marking opp: "<<i<<endl;
+                //cout << worldModel->getUNum()-WO_TEAMMATE1 << " agent "<<closestAgentId<<" marking opp: "<<i<<endl;
             }
         }
     }
+    //cout << worldModel->getUNum()-WO_TEAMMATE1 << " *********************** "<<endl<<endl;
 }
 
 SkillType NaoBehavior::backAction() {
@@ -216,16 +234,23 @@ SkillType NaoBehavior::defense() {
             selectMarkingAgents();
 
             markingOppIdx = markingAgents[worldModel->getUNum() - WO_TEAMMATE1];
-            //cout << worldModel->getUNum() << " assigned " << markingOppIdx << endl;
+            //cout << worldModel->getUNum()-WO_TEAMMATE1 << " assigned " << markingOppIdx << endl;
             if (markingOppIdx != -1) {
-#ifdef ENABLE_DRAWINGSo
-                VecPosition opp = worldModel->getOpponent(WO_OPPONENT1 + markingOppIdx);
+                VecPosition target = worldModel->getOpponent(WO_OPPONENT1 + markingOppIdx);
+#ifdef ENABLE_DRAWINGS
                 worldModel->getRVSender()->drawLine(worldModel->getMyPosition().getX(), worldModel->getMyPosition().getY(),
-                        opp.getX(), opp.getY(), RVSender::YELLOW);
+                        target.getX(), target.getY(), RVSender::YELLOW);
+                worldModel->getRVSender()->drawCircle("player "+markingOppIdx, target.getX(), target.getY(), 0.25, RVSender::YELLOW);
 #endif
-                //return goToTarget(worldModel->getOpponent(WO_OPPONENT1 + markingOppIdx));
-                //cout << worldModel->getUNum() << " agent " << worldModel->getUNum() - WO_TEAMMATE1 << " marking opp " << markingOppIdx << endl;
-                return SKILL_STAND;
+                
+                double angle;
+                double distance;
+                target.setX(target.getX()-0.1);
+                getTargetDistanceAndAngle(target, distance, angle);
+                //cout << worldModel->getUNum()-WO_TEAMMATE1 << " agent " << worldModel->getUNum() - WO_TEAMMATE1 << " marking opp " << markingOppIdx << endl;
+                return goToTargetRelative(worldModel->g2l(target), angle, 2);
+                //return goToTarget(target);
+                //return SKILL_STAND();
             }
 
         }
