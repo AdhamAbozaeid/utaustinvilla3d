@@ -230,12 +230,14 @@ protected:
     SkillType offense();
 
     void find_closest_player_to_ball();
-    VecPosition getPosInFormation();
+    void assignRoles();
+    VecPosition getPosInFormation(int role, VecPosition  ball);
     SkillType defense();
     SkillType goalieAction();
     SkillType backAction();
     bool selectMarkedOpp();
     void selectMarkingAgents();
+    int roles[NUM_AGENTS];
 
 public:
 

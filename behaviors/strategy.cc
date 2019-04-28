@@ -3,43 +3,76 @@
 #include "common.h"
 #include "defense.cc"
 #include "offense.cc"
+#include "scram.cc"
 
 extern int agentBodyType;
 
-VecPosition NaoBehavior::getPosInFormation() {
+void NaoBehavior::assignRoles() {
+    Test t;
+    VecPosition agent, target;
+    VecPosition Ball = worldModel->getBall();
+    //cout << "Assign Roles"<<endl;
+    /* Goalie doesn't get assigned a goal, and has to be the first role*/
+    for (int i = WO_TEAMMATE1; i < WO_TEAMMATE1 + NUM_AGENTS; i++) {
+        if (i == ROLE_GOALIE)
+            continue;
+        if (i == worldModel->getUNum())
+            agent = worldModel->getMyPosition();
+        else
+            agent = worldModel->getTeammate(i);
+        //t.starts.push_back(std::make_pair(rand()%(n*n), rand()%(n*n)));
+        //cout<<i<<" "<<agent<<endl;
+        t.starts.push_back(std::make_pair(agent.getX(), agent.getY()));
+    }
+    //cout<<"targets"<<endl;
+    for (int i = ROLE_ON_BALL; i < ROLE_ON_BALL + NUM_AGENTS-1; i++) {
+        target = getPosInFormation(i, worldModel->getBall());
+        //cout<<i<<" "<<target<<endl;
+        t.targets.push_back(std::make_pair(target.getX(), target.getY()));
+    }
+
+    std::vector<Edge> answer = SOLVER(t);
+    //cout<<"assignment"<<endl;
+    for (int i = 0; i < NUM_AGENTS-1; i++) {
+        //cout<<answer[i].second.first+ROLE_ON_BALL << " > " << answer[i].second.second + ROLE_ON_BALL<< "= "<<answer[i].first<<endl;
+        roles[answer[i].second.first] = answer[i].second.second + ROLE_ON_BALL;
+    }
+}
+
+VecPosition NaoBehavior::getPosInFormation(int role, VecPosition ball) {
     VecPosition target;
-    switch (worldModel->getUNum()) {
+    switch (role) {
         case ROLE_GOALIE:
             target.setX(-HALF_FIELD_X + 0.25);
             target.setY(0);
             break;
         case ROLE_ON_BALL:
-            target.setX(worldModel->getBall().getX());
-            target.setY(worldModel->getBall().getY());
+            target.setX(ball.getX()-0.2);
+            target.setY(ball.getY());
             break;
         case ROLE_FRONT_RIGHT:
-            target.setX(worldModel->getBall().getX() - 0.5);
-            target.setY(worldModel->getBall().getY() - 2);
+            target.setX(ball.getX() - 0.5);
+            target.setY(ball.getY() - 2);
             break;
         case ROLE_FRONT_LEFT:
-            target.setX(worldModel->getBall().getX() - 0.5);
-            target.setY(worldModel->getBall().getY() + 2);
+            target.setX(ball.getX() - 0.5);
+            target.setY(ball.getY() + 2);
             break;
         case ROLE_FORWARD_CENTER:
             target.setX(HALF_FIELD_X / 2);
             target.setY(0);
             break;
         case ROLE_SUPPORTER:
-            target.setX(worldModel->getBall().getX() - 2);
-            target.setY(worldModel->getBall().getY());
+            target.setX(ball.getX() - 2);
+            target.setY(ball.getY());
             break;
         case ROLE_WING_RIGHT:
-            target.setX(worldModel->getBall().getX() - 3);
-            target.setY(worldModel->getBall().getY() - 2);
+            target.setX(ball.getX() - 3);
+            target.setY(ball.getY() - 2);
             break;
         case ROLE_WING_LEFT:
-            target.setX(worldModel->getBall().getX() - 3);
-            target.setY(worldModel->getBall().getY() + 2);
+            target.setX(ball.getX() - 3);
+            target.setY(ball.getY() + 2);
             break;
         case ROLE_MIDDLE:
             target.setX(-HALF_FIELD_X / 2);
@@ -47,13 +80,12 @@ VecPosition NaoBehavior::getPosInFormation() {
             break;
         case ROLE_BACK_RIGHT:
         {
-            VecPosition Ball = worldModel->getBall();
             VecPosition goalCenter = VecPosition(-HALF_FIELD_X, 0, 0);
             double slope, intercept, y, distBallToGoal, distAgentToGoal;
             float angle;
 
-            distBallToGoal = Ball.getDistanceTo(goalCenter);
-            getLineParam(Ball, goalCenter, slope, intercept);
+            distBallToGoal = ball.getDistanceTo(goalCenter);
+            getLineParam(ball, goalCenter, slope, intercept);
             angle = atan(slope);
             /*Stand on line few degrees above line from ball to center of goal
              Back Left will stand at an offset below the line*/
@@ -71,13 +103,12 @@ VecPosition NaoBehavior::getPosInFormation() {
         }
         case ROLE_BACK_LEFT:
         {
-            VecPosition Ball = worldModel->getBall();
             VecPosition goalCenter = VecPosition(-HALF_FIELD_X, 0, 0);
             double slope, intercept, y, distBallToGoal, distAgentToGoal;
             float angle;
 
-            distBallToGoal = Ball.getDistanceTo(goalCenter);
-            getLineParam(Ball, goalCenter, slope, intercept);
+            distBallToGoal = ball.getDistanceTo(goalCenter);
+            getLineParam(ball, goalCenter, slope, intercept);
             angle = atan(slope);
             angle += 0.07 * (signbit(angle) ? -1 : 1);
 
@@ -104,9 +135,10 @@ VecPosition NaoBehavior::getPosInFormation() {
         target.setY(-HALF_FIELD_Y);
 
     // Adjust target to not be too close to teammates or the ball
-    if (worldModel->getUNum() != ROLE_ON_BALL)
+    if (role != ROLE_ON_BALL)
         target = collisionAvoidance(true /*teammate*/, false/*opponent*/, true/*ball*/, 1/*proximity thresh*/, .5/*collision thresh*/, target, true/*keepDistance*/);
-
+    else
+        target = collisionAvoidance(true /*teammate*/, false/*opponent*/, false/*ball*/, 1/*proximity thresh*/, .5/*collision thresh*/, target, true/*keepDistance*/);
     return target;
 }
 
@@ -124,12 +156,13 @@ void NaoBehavior::beam(double& beamX, double& beamY, double& beamAngle) {
         beamX = -2;
         beamY = 1;
     } else {
-        VecPosition target = getPosInFormation();
+        VecPosition target = getPosInFormation(worldModel->getUNum(), worldModel->getBall());
         beamX = target.getX();
         beamY = target.getY();
     }
     beamAngle = 0;
-    memset(markingAgents, -1, sizeof(markingAgents));
+    memset(markingAgents, -1, sizeof (markingAgents));
+    roles[0] = ROLE_GOALIE;
 }
 
 SkillType NaoBehavior::selectSkill() {
@@ -193,7 +226,7 @@ SkillType NaoBehavior::selectSkill() {
     // back and forth
     //return demoKickingCircle();
 
-    //return defense();
+    return defense();
     return offense();
 }
 

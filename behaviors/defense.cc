@@ -148,23 +148,23 @@ void NaoBehavior::selectMarkingAgents() {
             closestAgentDist = INT_MAX;
             closestAgentId = -1;
             opp = worldModel->getOpponent(WO_OPPONENT1 + i);
-            
-             //cout << worldModel->getUNum()-WO_TEAMMATE1 << " opp "<<i<<opp<<endl;
-            for (int j = (ROLE_ON_BALL-WO_TEAMMATE1)+1; j < NUM_AGENTS; j++) {
+
+            //cout << worldModel->getUNum()-WO_TEAMMATE1 << " opp "<<i<<opp<<endl;
+            for (int j = (ROLE_ON_BALL - WO_TEAMMATE1) + 1; j < NUM_AGENTS; j++) {
                 /* If the agent is not marking another opponent*/
                 if (markingAgents[j] == -1) {
-                    if(worldModel->getUNum() == (WO_TEAMMATE1 + j))
-                            agent = worldModel->getMyPosition();
+                    if (worldModel->getUNum() == (WO_TEAMMATE1 + j))
+                        agent = worldModel->getMyPosition();
                     else
                         agent = worldModel->getTeammate(WO_TEAMMATE1 + j);
-                    
+
                     currentAgentDist = agent.getDistanceTo(opp);
                     //cout << worldModel->getUNum()-WO_TEAMMATE1 << " agent "<< j << " distance "<<currentAgentDist<<" closest "<<closestAgentDist<< endl;
                     if (currentAgentDist < closestAgentDist) {
                         closestAgentDist = currentAgentDist;
                         closestAgentId = j;
                     }
-                }else{
+                } else {
                     //cout << worldModel->getUNum()-WO_TEAMMATE1 << " agent "<< j << " already marking"<<endl;
                 }
             }
@@ -227,8 +227,30 @@ SkillType NaoBehavior::backAction() {
 }
 
 SkillType NaoBehavior::defense() {
-    int markingOppIdx;
+    int role;
+    VecPosition target;
 
+    if (worldModel->getUNum() == ROLE_GOALIE)
+        return goalieAction();
+
+    assignRoles();
+    role = roles[worldModel->getUNum() - ROLE_ON_BALL];
+    if (role == ROLE_BACK_LEFT || role == ROLE_BACK_RIGHT)
+        return backAction();
+
+    target = getPosInFormation(role, worldModel->getBall());
+    target.setZ(me.getZ());
+    
+    if (me.getDistanceTo(target) < .25) {
+        // Close enough to desired position and orientation so just stand
+        return SKILL_STAND;
+    } else {
+        // Move toward target location
+        return goToTarget(target);
+    }
+
+    int markingOppIdx;
+#if 0
     if ((worldModel->getUNum() != ROLE_GOALIE) && (worldModel->getUNum() != ROLE_ON_BALL)) {
         if (selectMarkedOpp()) {
             selectMarkingAgents();
@@ -240,12 +262,12 @@ SkillType NaoBehavior::defense() {
 #ifdef ENABLE_DRAWINGS
                 worldModel->getRVSender()->drawLine(worldModel->getMyPosition().getX(), worldModel->getMyPosition().getY(),
                         target.getX(), target.getY(), RVSender::YELLOW);
-                worldModel->getRVSender()->drawCircle("player "+markingOppIdx, target.getX(), target.getY(), 0.25, RVSender::YELLOW);
+                worldModel->getRVSender()->drawCircle("player " + markingOppIdx, target.getX(), target.getY(), 0.25, RVSender::YELLOW);
 #endif
-                
+
                 double angle;
                 double distance;
-                target.setX(target.getX()-0.1);
+                target.setX(target.getX() - 0.1);
                 getTargetDistanceAndAngle(target, distance, angle);
                 //cout << worldModel->getUNum()-WO_TEAMMATE1 << " agent " << worldModel->getUNum() - WO_TEAMMATE1 << " marking opp " << markingOppIdx << endl;
                 return goToTargetRelative(worldModel->g2l(target), angle, 2);
@@ -255,6 +277,9 @@ SkillType NaoBehavior::defense() {
 
         }
     }
+#endif
+
+#if 0
     switch (worldModel->getUNum()) {
         case ROLE_GOALIE:
             return goalieAction();
@@ -264,7 +289,7 @@ SkillType NaoBehavior::defense() {
             return backAction();
             break;
         default:
-            VecPosition target = getPosInFormation();
+            VecPosition target = getPosInFormation(worldModel->getUNum(), worldModel->getBall());
             if (me.getDistanceTo(target) < .25) {
                 // Close enough to desired position and orientation so just stand
                 return SKILL_STAND;
@@ -274,4 +299,6 @@ SkillType NaoBehavior::defense() {
             }
             break;
     }
+#endif
 }
+
