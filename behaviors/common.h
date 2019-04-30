@@ -14,8 +14,8 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#define ENABLE_DRAWINGS
-#define NUM_OPPONENT 2
+//#define ENABLE_DRAWINGS
+#define NUM_OPPONENT 11
 
 #define ROLE_GOALIE         WO_TEAMMATE1
 #define ROLE_ON_BALL        WO_TEAMMATE2

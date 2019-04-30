@@ -244,11 +244,24 @@ SkillType NaoBehavior::defense() {
     role = roles[worldModel->getUNum() - ROLE_ON_BALL];
     if (role == ROLE_BACK_LEFT || role == ROLE_BACK_RIGHT)
         return backAction(role);
-    //if (role == ROLE_COVERING)
 
     //target = getPosInFormation(role, worldModel->getBall());
     target = roles_positions[worldModel->getUNum() - ROLE_ON_BALL];
     target.setZ(me.getZ());
+    
+    if (role == ROLE_COVERING) {
+#ifdef ENABLE_DRAWINGS
+        worldModel->getRVSender()->drawLine(worldModel->getMyPosition().getX(), worldModel->getMyPosition().getY(),
+                    target.getX(), target.getY(), RVSender::YELLOW);
+        worldModel->getRVSender()->drawCircle(target.getX(), target.getY(), 0.25, RVSender::YELLOW);
+#endif
+        double angle;
+        double distance;
+        target.setX(target.getX() - 0.1);
+        getTargetDistanceAndAngle(target, distance, angle);
+        //cout << worldModel->getUNum()-WO_TEAMMATE1 << " agent " << worldModel->getUNum() - WO_TEAMMATE1 << " marking opp " << markingOppIdx << endl;
+        return goToTargetRelative(worldModel->g2l(target), angle, 2);
+    }
 
     if (me.getDistanceTo(target) < .25) {
         // Close enough to desired position and orientation so just stand
