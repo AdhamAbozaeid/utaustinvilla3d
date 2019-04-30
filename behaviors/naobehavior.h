@@ -228,6 +228,9 @@ protected:
 
     SkillType demoKickingCircle();
     SkillType offense();
+    double closestPlayer[8];
+    void find_closest_opponent_to_me();
+    SkillType pass_ball(int pass_to);
 
     void find_closest_player_to_ball();
     void assignRoles();
