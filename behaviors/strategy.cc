@@ -11,32 +11,58 @@ void NaoBehavior::assignRoles() {
     Test t;
     VecPosition agent, target;
     VecPosition Ball = worldModel->getBall();
+    int noMarkedOpp=0;
     //cout << "Assign Roles"<<endl;
     /* Goalie doesn't get assigned a goal, and has to be the first role*/
     for (int i = WO_TEAMMATE1; i < WO_TEAMMATE1 + NUM_AGENTS; i++) {
-        if (i == ROLE_GOALIE)
+        if (i == ROLE_GOALIE || i == closestPlayer[0])
             continue;
         if (i == worldModel->getUNum())
             agent = worldModel->getMyPosition();
         else
             agent = worldModel->getTeammate(i);
         //t.starts.push_back(std::make_pair(rand()%(n*n), rand()%(n*n)));
-        //cout<<i<<" "<<agent<<endl;
+        cout<<i<<" "<<agent<<endl;
         t.starts.push_back(std::make_pair(agent.getX(), agent.getY()));
     }
     //cout<<"targets"<<endl;
-    for (int i = ROLE_ON_BALL; i < ROLE_ON_BALL + NUM_AGENTS-1; i++) {
+    for (int i = 0; i < NUM_OPPONENT; i++) {
+        if (markedOpponents[i]) {
+            target = worldModel->getOpponent(WO_OPPONENT1 + i);
+            t.targets.push_back(std::make_pair(target.getX(), target.getY()));
+            noMarkedOpp++;
+        }
+    }
+
+    for (int i = ROLE_ON_BALL+1; i < ROLE_ON_BALL + NUM_AGENTS-1-noMarkedOpp; i++) {
         target = getPosInFormation(i, worldModel->getBall());
-        //cout<<i<<" "<<target<<endl;
+        cout<<i<<" "<<target<<endl;
         t.targets.push_back(std::make_pair(target.getX(), target.getY()));
     }
 
     std::vector<Edge> answer = SOLVER(t);
     //cout<<"assignment"<<endl;
-    for (int i = 0; i < NUM_AGENTS-1; i++) {
-        //cout<<answer[i].second.first+ROLE_ON_BALL << " > " << answer[i].second.second + ROLE_ON_BALL<< "= "<<answer[i].first<<endl;
-        roles[answer[i].second.first] = answer[i].second.second + ROLE_ON_BALL;
+    for (int i = 0; i < NUM_AGENTS-2; i++) {
+        cout<<answer[i].second.first+ROLE_ON_BALL << " > " << answer[i].second.second + ROLE_ON_BALL<< "= "<<answer[i].first<<endl;
+        // The first noMarkedOpp locations in t.targets array are covering
+        if (answer[i].second.second < noMarkedOpp)
+            roles[answer[i].second.first] = ROLE_COVERING;
+        else
+            roles[answer[i].second.first] = answer[i].second.second + ROLE_ON_BALL+1;
+        roles_positions[answer[i].second.first] = VecPosition(t.targets[answer[i].second.second].first, t.targets[answer[i].second.second].second);
     }
+    // Insert the agent closest to the ball at his location in the roles array
+    for(int i = NUM_AGENTS-3 ; i >= (closestPlayer[0]-WO_TEAMMATE2); i--) {
+        roles[i+1] = roles[i];
+        roles_positions[i+1] = roles_positions[i];
+    }
+    
+    roles[(int)closestPlayer[0]-WO_TEAMMATE2] = ROLE_ON_BALL;
+    roles_positions[(int)closestPlayer[0]-WO_TEAMMATE2] = Ball;
+    /*
+    for(int i=0; i<NUM_AGENTS-1; i++)
+        cout<<"agent "<<i<<" role: "<< roles[i]<<endl;
+    */
 }
 
 VecPosition NaoBehavior::getPosInFormation(int role, VecPosition ball) {
@@ -47,7 +73,7 @@ VecPosition NaoBehavior::getPosInFormation(int role, VecPosition ball) {
             target.setY(0);
             break;
         case ROLE_ON_BALL:
-            target.setX(ball.getX()-0.2);
+            target.setX(ball.getX()-0.1);
             target.setY(ball.getY());
             break;
         case ROLE_FRONT_RIGHT:
@@ -226,8 +252,10 @@ SkillType NaoBehavior::selectSkill() {
     // back and forth
     //return demoKickingCircle();
 
+    find_closest_player_to_ball();
+    if(closestPlayer[1] < 0.25)
+        return offense();
     return defense();
-    return offense();
 }
 
 /*
@@ -293,5 +321,3 @@ SkillType NaoBehavior::demoKickingCircle() {
         }
     }
 }
-
-

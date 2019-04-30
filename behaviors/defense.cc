@@ -177,7 +177,7 @@ void NaoBehavior::selectMarkingAgents() {
     //cout << worldModel->getUNum()-WO_TEAMMATE1 << " *********************** "<<endl<<endl;
 }
 
-SkillType NaoBehavior::backAction() {
+SkillType NaoBehavior::backAction(int role) {
     VecPosition Ball = worldModel->getBall();
     VecPosition goalCenter = VecPosition(-HALF_FIELD_X, 0, 0);
     VecPosition target;
@@ -189,7 +189,7 @@ SkillType NaoBehavior::backAction() {
     distBallToGoal = Ball.getDistanceTo(goalCenter);
 
 
-    if (worldModel->getUNum() == ROLE_BACK_RIGHT) {
+    if (role == ROLE_BACK_RIGHT) {
         /*Stand on line few degrees above line from ball to center of goal
          Back Left will stand at an offset below the line*/
         angle -= 0.07 * (signbit(angle) ? -1 : 1);
@@ -233,14 +233,24 @@ SkillType NaoBehavior::defense() {
     if (worldModel->getUNum() == ROLE_GOALIE)
         return goalieAction();
 
-    assignRoles();
+    if (selectMarkedOpp()) {
+        selectMarkingAgents();
+    }
+    //if(worldModel->getUNum() == WO_TEAMMATE2)
+        assignRoles();
+    //return SKILL_STAND;
+
     role = roles[worldModel->getUNum() - ROLE_ON_BALL];
     if (role == ROLE_BACK_LEFT || role == ROLE_BACK_RIGHT)
-        return backAction();
+        return backAction(role);
+    //if (role == ROLE_COVERING)
 
-    target = getPosInFormation(role, worldModel->getBall());
+    //target = getPosInFormation(role, worldModel->getBall());
+    target = roles_positions[worldModel->getUNum() - ROLE_ON_BALL];
     target.setZ(me.getZ());
-    
+    //if(role == ROLE_ON_BALL)
+        cout << worldModel->getUNum() - WO_TEAMMATE1 << "role "<<role<<" target: "<< target<<endl;
+
     if (me.getDistanceTo(target) < .25) {
         // Close enough to desired position and orientation so just stand
         return SKILL_STAND;
@@ -248,8 +258,7 @@ SkillType NaoBehavior::defense() {
         // Move toward target location
         return goToTarget(target);
     }
-
-    int markingOppIdx;
+  
 #if 0
     if ((worldModel->getUNum() != ROLE_GOALIE) && (worldModel->getUNum() != ROLE_ON_BALL)) {
         if (selectMarkedOpp()) {

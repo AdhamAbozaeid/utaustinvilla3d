@@ -237,10 +237,11 @@ protected:
     VecPosition getPosInFormation(int role, VecPosition  ball);
     SkillType defense();
     SkillType goalieAction();
-    SkillType backAction();
+    SkillType backAction(int role);
     bool selectMarkedOpp();
     void selectMarkingAgents();
     int roles[NUM_AGENTS];
+    VecPosition roles_positions[NUM_AGENTS];
 
 public:
 
