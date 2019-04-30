@@ -22,7 +22,7 @@ void NaoBehavior::assignRoles() {
         else
             agent = worldModel->getTeammate(i);
         //t.starts.push_back(std::make_pair(rand()%(n*n), rand()%(n*n)));
-        cout<<i<<" "<<agent<<endl;
+        //cout<<i<<" "<<agent<<endl;
         t.starts.push_back(std::make_pair(agent.getX(), agent.getY()));
     }
     //cout<<"targets"<<endl;
@@ -36,14 +36,14 @@ void NaoBehavior::assignRoles() {
 
     for (int i = ROLE_ON_BALL+1; i < ROLE_ON_BALL + NUM_AGENTS-1-noMarkedOpp; i++) {
         target = getPosInFormation(i, worldModel->getBall());
-        cout<<i<<" "<<target<<endl;
+        //cout<<i<<" "<<target<<endl;
         t.targets.push_back(std::make_pair(target.getX(), target.getY()));
     }
 
     std::vector<Edge> answer = SOLVER(t);
     //cout<<"assignment"<<endl;
     for (int i = 0; i < NUM_AGENTS-2; i++) {
-        cout<<answer[i].second.first+ROLE_ON_BALL << " > " << answer[i].second.second + ROLE_ON_BALL<< "= "<<answer[i].first<<endl;
+        //cout<<answer[i].second.first+ROLE_ON_BALL << " > " << answer[i].second.second + ROLE_ON_BALL<< "= "<<answer[i].first<<endl;
         // The first noMarkedOpp locations in t.targets array are covering
         if (answer[i].second.second < noMarkedOpp)
             roles[answer[i].second.first] = ROLE_COVERING;
@@ -253,8 +253,8 @@ SkillType NaoBehavior::selectSkill() {
     //return demoKickingCircle();
 
     find_closest_player_to_ball();
-    if(closestPlayer[1] < 0.25)
-        return offense();
+    //if(closestPlayer[1] < 0.25)
+     //   return offense();
     return defense();
 }
 

@@ -83,6 +83,8 @@ SkillType NaoBehavior::goalieAction() {
             //return goToTargetRelative(worldModel->g2l(target), angle, 2);
             return goToTarget(target);
         }
+    } else if(worldModel->getMyPosition().getDistanceTo(worldModel->getBall()) < 1) {
+        return kickBall(KICK_FORWARD, VecPosition(HALF_FIELD_X, 0, 0));
     }
     return SKILL_STAND;
 }
@@ -236,9 +238,8 @@ SkillType NaoBehavior::defense() {
     if (selectMarkedOpp()) {
         selectMarkingAgents();
     }
-    //if(worldModel->getUNum() == WO_TEAMMATE2)
-        assignRoles();
-    //return SKILL_STAND;
+    
+    assignRoles();
 
     role = roles[worldModel->getUNum() - ROLE_ON_BALL];
     if (role == ROLE_BACK_LEFT || role == ROLE_BACK_RIGHT)
@@ -248,8 +249,6 @@ SkillType NaoBehavior::defense() {
     //target = getPosInFormation(role, worldModel->getBall());
     target = roles_positions[worldModel->getUNum() - ROLE_ON_BALL];
     target.setZ(me.getZ());
-    //if(role == ROLE_ON_BALL)
-        cout << worldModel->getUNum() - WO_TEAMMATE1 << "role "<<role<<" target: "<< target<<endl;
 
     if (me.getDistanceTo(target) < .25) {
         // Close enough to desired position and orientation so just stand
